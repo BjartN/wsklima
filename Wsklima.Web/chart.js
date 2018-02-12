@@ -20,7 +20,10 @@
             type: 'GET',
             url: '1950-2018-SA.csv',
             dataType: 'text',
-            success: function (csv) { showTimeseries(csv); },
+            success: function (csv) {
+                showTimeseriesByYear(csv);
+                showTimeseries(csv);
+            },
             error: function () { alert("Crash!"); }
         });
     });
@@ -53,7 +56,7 @@
                 zoomType: 'x'
             },
             title: {
-                text: 'Snødybder Kvamskogen'
+                text: 'Snødybder Kvamskogen hele period'
             },
             subtitle: {
                 text: 'Observasjoner tatt på Jonshøgdi fra 2006, Eikedalen før det. Zoom ved å markere ett område i grafen.'
@@ -109,63 +112,116 @@
         });
     }
 
+    function monthKey(d) {
+        return d.getFullYear() + '_' + d.getMonth();
+    }
 
-    function showByMonth(csv) {
-        var entries = formatData(csv);
+    function getDateByMonthKey(key) {
+        var a = key.split('_');
+        return new Date(parseInt(a[0]), parseInt(a[1]));
+    }
 
-        Highcharts.chart('container', {
-            chart: {
-                type: 'column'
-            },
-            title: {
-                text: 'Monthly Max Snow Depth'
-            },
-            subtitle: {
-                text: 'Source: EKlima'
-            },
-            xAxis: {
-                categories: months,
-                crosshair: true
-            },
-            yAxis: {
-                min: 0,
-                title: {
-                    text: 'Snow Depth (cm)'
-                }
-            },
-            tooltip: {
-                headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
-                pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
-                '<td style="padding:0"><b>{point.y:.1f} mm</b></td></tr>',
-                footerFormat: '</table>',
-                shared: true,
-                useHTML: true
-            },
-            plotOptions: {
-                column: {
-                    pointPadding: 0.2,
-                    borderWidth: 0
-                }
-            },
-            series: [{
-                name: 'Tokyo',
-                data: [49.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4]
+    function toBase(unixDate) {
+        var d = new Date(unixDate * 1000);
+        var date = new Date(1970, d.getMonth(), d.getDate());
 
-            }, {
-                name: 'New York',
-                data: [83.6, 78.8, 98.5, 93.4, 106.0, 84.5, 105.0, 104.3, 91.2, 83.5, 106.6, 92.3]
+        return date.getTime() / 1000
+    }
+   
+    function getYears() {
+        var years=  _.chain($('.year-select').toArray())
+            .map(function (x) { return $(x).val()*1; })
+            .value();
 
-            }, {
-                name: 'London',
-                data: [48.9, 38.8, 39.3, 41.4, 47.0, 48.3, 59.0, 59.6, 52.4, 65.2, 59.3, 51.2]
+        return years;
 
-            }, {
-                name: 'Berlin',
-                data: [42.4, 33.2, 34.5, 39.7, 52.6, 75.5, 57.4, 60.4, 47.6, 39.1, 46.8, 51.1]
+        return [2016, 2017, 2018];
+    }
 
-            }]
+    function initYears(csv) {
+        $('.year-select').change(function () {
+            showTimeseriesByYear(csv);
         });
     }
 
+    var first = true;
+
+    function showTimeseriesByYear(csv) {
+
+        if (first) {
+            initYears(csv);
+            first = false;
+        }
+
+        var yrs = getYears();
+
+        var entries = _.chain(formatData(csv))
+            .filter(function (x) { return yrs.indexOf( new Date(x[0]*1000).getFullYear())>=0; })
+            .value()
+
+        var byYear = _.groupBy(entries, function (x) { return new Date(x[0] * 1000).getFullYear() });
+        var keys = _.keys(byYear);
+
+        var series = _.chain(keys)
+            .map(function (x) {
+                return {
+                    type: 'line',
+                    name: 'Snødybder ' + x,
+                    data: _.chain(byYear[x]).map(function (y) { return [toBase(y[0]), y[1]]; }).value()
+                }
+            })
+            .value();
+        
+
+        Highcharts.chart('container2', {
+            tooltip: {
+                formatter: function () {
+                    return Highcharts.dateFormat('%Y %b %e: ' + this.y + 'cm', this.x * 1000)
+                }
+            },
+
+            chart: {
+                zoomType: 'x'
+            },
+            title: {
+                text: 'Snødybder Kvamskogen årssammenligning'
+            },
+            subtitle: {
+                text: 'Observasjoner tatt på Jonshøgdi fra 2006, Eikedalen før det. Zoom ved å markere ett område i grafen.'
+            },
+            xAxis: {
+                type: 'datetime',
+                labels: {
+                    formatter: function () {
+                        return Highcharts.dateFormat('%b', this.value * 1000); // milliseconds not seconds
+                    },
+                }
+            },
+            yAxis: {
+                title: {
+                    text: 'Snødybde (cm)'
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            plotOptions: {
+                line: {
+                    marker: {
+                        radius: 2
+                    },
+                    lineWidth: 1,
+                    states: {
+                        hover: {
+                            lineWidth: 1
+                        }
+                    },
+                    threshold: null
+                }
+            },
+
+            series: series
+        });
+    }
 
 })();
