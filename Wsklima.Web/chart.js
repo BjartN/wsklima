@@ -176,7 +176,7 @@
         Highcharts.chart('container2', {
             tooltip: {
                 formatter: function () {
-                    return Highcharts.dateFormat('%Y %b %e: ' + this.y + 'cm', this.x * 1000)
+                    return Highcharts.dateFormat(this.series.name + ' %b %e: ' + this.y + 'cm', this.x * 1000)
                 }
             },
 
@@ -203,7 +203,7 @@
                 }
             },
             legend: {
-                enabled: false
+                enabled: true
             },
             plotOptions: {
                 line: {
