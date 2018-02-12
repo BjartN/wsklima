@@ -1,0 +1,1 @@
+http://eklima.met.no/metdata/MetDataService?WSDL
