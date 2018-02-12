@@ -15,7 +15,42 @@
         'Dec'
     ];
 
-    $(document).ready(function () {
+    $(function () {
+
+        var $compareYears = $('#compare-years'),
+            $compareYearsWrapper = $('#compare-years-wrapper');
+            $allYears = $('#all-years'),
+            $filterPanel = $('#filter-panel'),
+            $selects = $('.year-select'),
+            $container = $('#container'),
+            $container2 = $('#container2');
+
+        $container.show();
+        $compareYearsWrapper.hide();
+
+        $allYears.click(function () {
+            $container.show();
+            $compareYearsWrapper.hide();
+        });
+
+        $compareYears.click(function () {
+            $container.hide();
+            $compareYearsWrapper.show();
+        });
+
+        _.each(_.range(1950, 2019), function (x) {
+            $selects.append($('<option>', { value: x }).text(x));
+        });
+
+        $($selects[0]).val(2016);
+        $($selects[1]).val(2017);
+        $($selects[2]).val(2018);
+
+        loadData();
+    });
+
+
+    function loadData(){
         $.ajax({
             type: 'GET',
             url: '1950-2018-SA.csv',
@@ -26,7 +61,7 @@
             },
             error: function () { alert("Crash!"); }
         });
-    });
+    }
 
     function formatData(csv) {
 
