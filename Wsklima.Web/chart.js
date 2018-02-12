@@ -96,7 +96,7 @@
                 zoomType: 'x'
             },
             title: {
-                text: 'Snødybder Kvamskogen hele period'
+                text: 'Snødybder Kvamskogen'
             },
             subtitle: {
                 text: 'Observasjoner tatt på Jonshøgdi fra 2006, Eikedalen før det. Zoom ved å markere ett område i grafen.'
