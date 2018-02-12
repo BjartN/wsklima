@@ -1,5 +1,7 @@
 ﻿(function () {
 
+    var data = undefined;
+
     var months = [
         'Jan',
         'Feb',
@@ -31,11 +33,13 @@
         $allYears.click(function () {
             $container.show();
             $compareYearsWrapper.hide();
+            showTimeseries(data);
         });
 
         $compareYears.click(function () {
             $container.hide();
             $compareYearsWrapper.show();
+            showTimeseriesByYear(data);
         });
 
         _.each(_.range(1950, 2019), function (x) {
@@ -46,19 +50,20 @@
         $($selects[1]).val(2017);
         $($selects[2]).val(2018);
 
-        loadData();
+        loadData(function (csv) {
+            data = csv;
+            showTimeseriesByYear(data);
+            showTimeseries(data);
+        });
     });
 
 
-    function loadData(){
+    function loadData(success){
         $.ajax({
             type: 'GET',
             url: '1950-2018-SA.csv',
             dataType: 'text',
-            success: function (csv) {
-                showTimeseriesByYear(csv);
-                showTimeseries(csv);
-            },
+            success: success,
             error: function () { alert("Crash!"); }
         });
     }
