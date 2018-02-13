@@ -43,7 +43,7 @@
         });
 
         _.each(_.range(1950, 2019), function (x) {
-            $selects.append($('<option>', { value: x }).text(x));
+            $selects.append($('<option>', { value: x }).text(x-1 + '-' + x));
         });
 
         $($selects[0]).val(2016);
@@ -87,11 +87,9 @@
         Highcharts.chart('container', {
             tooltip: {
                 formatter: function () {
-                    //return new Date(this.x * 1000)
                     return Highcharts.dateFormat('%Y %b %e: ' + this.y + 'cm', this.x * 1000)
                 }
             },
-
             chart: {
                 zoomType: 'x'
             },
@@ -132,7 +130,7 @@
                         ]
                     },
                     marker: {
-                        radius: 2
+                        radius: 1
                     },
                     lineWidth: 1,
                     states: {
@@ -161,11 +159,19 @@
         return new Date(parseInt(a[0]), parseInt(a[1]));
     }
 
-    function toBase(unixDate) {
+    function getBaseDateSeason(unixDate) {
+
         var d = new Date(unixDate * 1000);
-        var date = new Date(1970, d.getMonth(), d.getDate());
+        var year = d.getMonth() > 6 ? 1970 : 1971;
+        var date = new Date(year, d.getMonth(), d.getDate());
 
         return date.getTime() / 1000
+    }
+
+    function getSeason(unixDate) {
+        var d = new Date(unixDate * 1000);
+        var season = d.getMonth() > 6 ? d.getFullYear() + 1 : d.getFullYear();
+        return season;
     }
    
     function getYears() {
@@ -193,13 +199,13 @@
             first = false;
         }
 
-        var yrs = getYears();
+        var selectedYears = getYears();
 
         var entries = _.chain(formatData(csv))
-            .filter(function (x) { return yrs.indexOf( new Date(x[0]*1000).getFullYear())>=0; })
+            .filter(function (x) { return selectedYears.indexOf(getSeason(x[0]))>=0; })
             .value()
 
-        var byYear = _.groupBy(entries, function (x) { return new Date(x[0] * 1000).getFullYear() });
+        var byYear = _.groupBy(entries, function (x) { return getSeason(x[0]) });
         var keys = _.keys(byYear);
 
         var series = _.chain(keys)
@@ -207,7 +213,7 @@
                 return {
                     type: 'line',
                     name: 'Snødybder ' + x,
-                    data: _.chain(byYear[x]).map(function (y) { return [toBase(y[0]), y[1]]; }).value()
+                    data: _.chain(byYear[x]).map(function (y) { return [getBaseDateSeason(y[0]), y[1]]; }).value()
                 }
             })
             .value();
@@ -224,7 +230,7 @@
                 zoomType: 'x'
             },
             title: {
-                text: 'Snødybder Kvamskogen årssammenligning'
+                text: 'Snødybder Kvamskogen sesongsammenligning'
             },
             subtitle: {
                 text: 'Observasjoner tatt på Jonshøgdi fra 2006, Eikedalen før det. Zoom ved å markere ett område i grafen.'
