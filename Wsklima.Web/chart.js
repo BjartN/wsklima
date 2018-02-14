@@ -1,5 +1,6 @@
 ﻿(function () {
 
+    var startYear = 1950;
     var data = undefined;
 
     var months = [
@@ -20,69 +21,95 @@
     $(function () {
 
         var $compareYears = $('#compare-years'),
-            $compareYearsWrapper = $('#compare-years-wrapper');
+            $compareYearsWrapper = $('.compare-season-wrapper'),
+            $allYearsWrapper = $('.all-years-wrapper'),
             $allYears = $('#all-years'),
-            $filterPanel = $('#filter-panel'),
             $selects = $('.year-select'),
-            $container = $('#container'),
-            $container2 = $('#container2');
+            $dimmer = $('.dimmer');
 
-        $container.show();
+        //intitialize view state
+        $allYearsWrapper.show();
         $compareYearsWrapper.hide();
 
+        //view1
         $allYears.click(function () {
-            $container.show();
+            $allYearsWrapper.show();
             $compareYearsWrapper.hide();
             showTimeseries(data);
         });
 
+        //view2
         $compareYears.click(function () {
-            $container.hide();
+            $allYearsWrapper.hide();
             $compareYearsWrapper.show();
             showTimeseriesByYear(data);
         });
 
-        _.each(_.range(1950, 2019), function (x) {
-            $selects.append($('<option>', { value: x }).text(x-1 + '-' + x));
+        _.each(_.range(startYear, (new Date().getFullYear()) + 1), function (x) {
+            $selects.append($('<option>', { value: x }).text(x - 1 + '-' + x));
         });
 
         $($selects[0]).val(2016);
         $($selects[1]).val(2017);
         $($selects[2]).val(2018);
 
-        loadData(function (csv) {
-            data = csv;
+        loadData(function (json) {
+            data = formatData(json);
             showTimeseriesByYear(data);
             showTimeseries(data);
+            $dimmer.hide();
         });
     });
 
 
-    function loadData(success){
+    function createView(populateAllYears, populateCompareSeason) {
+
+
+        var $compareYears = $('#compare-years'),
+            $compareYearsWrapper = $('.compare-season-wrapper'),
+            $allYearsWrapper = $('.all-years-wrapper'),
+            $allYears = $('#all-years'),
+            $selects = $('.year-select'),
+            $dimmer = $('.dimmer');
+
+        //intitialize view state
+        $allYearsWrapper.show();
+        $compareYearsWrapper.hide();
+
+        //view1
+        $allYears.click(function () {
+            $allYearsWrapper.show();
+            $compareYearsWrapper.hide();
+            populateCompareSeason();
+        });
+
+        //view2
+        $compareYears.click(function () {
+            $allYearsWrapper.hide();
+            $compareYearsWrapper.show();
+            populateAllYears();
+        });
+
+        _.each(_.range(startYear, (new Date().getFullYear()) + 1), function (x) {
+            $selects.append($('<option>', { value: x }).text(x - 1 + '-' + x));
+        });
+
+    }
+
+
+    function loadData(success) {
         $.ajax({
             type: 'GET',
-            url: '1950-2018-SA.csv',
-            dataType: 'text',
+            url: 'http://localhost:55880/series?from=' + startYear + '-01-01&to=2018-12-01&element=SA',
+            dataType: 'json',
             success: success,
-            error: function () { alert("Crash!"); }
+            error: function (e) {
+                alert('An error occured');
+            }
         });
     }
 
-    function formatData(csv) {
-
-        var lines = csv.split('\n');
-        var entries = _.chain(lines)
-            .map(function (x) { return x.split(',') })
-            .map(function (x) { return [parseInt(x[0]), parseFloat(x[1])]; })
-            .filter(function (x) { return !isNaN(x[0]) })
-            .value();
-
-        return entries;
-    }
-
-    function showTimeseries(csv) {
-
-        var entries = formatData(csv);
+    function showTimeseries(entries) {
 
         Highcharts.chart('container', {
             tooltip: {
@@ -150,15 +177,6 @@
         });
     }
 
-    function monthKey(d) {
-        return d.getFullYear() + '_' + d.getMonth();
-    }
-
-    function getDateByMonthKey(key) {
-        var a = key.split('_');
-        return new Date(parseInt(a[0]), parseInt(a[1]));
-    }
-
     function getBaseDateSeason(unixDate) {
 
         var d = new Date(unixDate * 1000);
@@ -173,10 +191,10 @@
         var season = d.getMonth() > 6 ? d.getFullYear() + 1 : d.getFullYear();
         return season;
     }
-   
+
     function getYears() {
-        var years=  _.chain($('.year-select').toArray())
-            .map(function (x) { return $(x).val()*1; })
+        var years = _.chain($('.year-select').toArray())
+            .map(function (x) { return $(x).val() * 1; })
             .value();
 
         return years;
@@ -184,25 +202,25 @@
         return [2016, 2017, 2018];
     }
 
-    function initYears(csv) {
+    function initYears(data) {
         $('.year-select').change(function () {
-            showTimeseriesByYear(csv);
+            showTimeseriesByYear(data);
         });
     }
 
     var first = true;
 
-    function showTimeseriesByYear(csv) {
+    function showTimeseriesByYear(d) {
 
         if (first) {
-            initYears(csv);
+            initYears(d);
             first = false;
         }
 
         var selectedYears = getYears();
 
-        var entries = _.chain(formatData(csv))
-            .filter(function (x) { return selectedYears.indexOf(getSeason(x[0]))>=0; })
+        var entries = _.chain(d)
+            .filter(function (x) { return selectedYears.indexOf(getSeason(x[0])) >= 0; })
             .value()
 
         var byYear = _.groupBy(entries, function (x) { return getSeason(x[0]) });
@@ -217,7 +235,7 @@
                 }
             })
             .value();
-        
+
 
         Highcharts.chart('container2', {
             tooltip: {
@@ -268,6 +286,16 @@
 
             series: series
         });
+    }
+
+
+    function formatData(data) {
+
+        var entries = _.chain(data)
+            .map(function (x) { return [(new Date(x.from).getTime()) / 1000, parseFloat(x.elementValue)] })
+            .value();
+
+        return entries;
     }
 
 })();

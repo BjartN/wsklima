@@ -21,9 +21,18 @@
             height: 400px;
             margin: 0 auto;
         }
+
+        .hidden {
+            display:none;
+        }
     </style>
 </head>
 <body>
+       
+        <div class="ui active dimmer">
+            <div class="ui large text loader"> Laster inn massevis av data</div>
+        </div>
+
     <div class="ui fixed inverted  menu">
         <a class="item" id="all-years">
             <i class="signal icon"></i>
@@ -39,7 +48,7 @@
     <br />
 
 
-    <div class="ui stackable grid" id="compare-years-wrapper">
+    <div class="ui stackable grid compare-season-wrapper hidden">
         <div class="four wide column">
             <div id="filter-panel">
                 <h3 class="ui header">Velg sesong</h3>
@@ -61,15 +70,12 @@
         </div>
     </div>
 
-    <div id="container"></div>
-
+    <div id="container" class="all-years-wrapper"></div>
 
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js"></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <script src="chart.js"></script>
-
-
 </body>
 </html>
