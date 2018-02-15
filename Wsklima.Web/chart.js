@@ -3,55 +3,26 @@
     var startYear = 1950;
     var data = undefined;
 
-    var months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec'
-    ];
-
     $(function () {
 
-        var $compareYears = $('#compare-years'),
-            $compareYearsWrapper = $('.compare-season-wrapper'),
-            $allYearsWrapper = $('.all-years-wrapper'),
-            $allYears = $('#all-years'),
-            $selects = $('.year-select'),
-            $dimmer = $('.dimmer');
+        var $dimmer = $('.dimmer');
 
-        //intitialize view state
-        $allYearsWrapper.show();
-        $compareYearsWrapper.hide();
+        //corresponding pages, menu items and function to run
+        var wrappers = _.map(['.all-years-wrapper', '.summary-wrapper', '.compare-season-wrapper'], function (x) { return $(x) });
+        var menuItems = _.map(['#all-years', '#summary', '#compare-years'], function (x) { return $(x) });
+        var functions = [
+            showTimeseries,
+            function (x) { showTimeseries(x, function (x) { return x[0] > (new Date(2017, 06, 01).getTime() / 1000) }, 'container3') },
+            showTimeseriesByYear
+        ];
 
-        //view1
-        $allYears.click(function () {
-            $allYearsWrapper.show();
-            $compareYearsWrapper.hide();
-            showTimeseries(data);
-        });
+        //intitialize starting state
+        _.each(wrappers, function (w, i) { if (i > 0) w.hide(); });
 
-        //view2
-        $compareYears.click(function () {
-            $allYearsWrapper.hide();
-            $compareYearsWrapper.show();
-            showTimeseriesByYear(data);
-        });
-
-        _.each(_.range(startYear, (new Date().getFullYear()) + 1), function (x) {
-            $selects.append($('<option>', { value: x }).text(x - 1 + '-' + x));
-        });
-
-        $($selects[0]).val(2016);
-        $($selects[1]).val(2017);
-        $($selects[2]).val(2018);
+        //intitialize view change
+        _.each(menuItems, function (x, i) {
+            initMenuClick(x, i, wrappers, functions);
+        })
 
         loadData(function (json) {
             data = formatData(json);
@@ -61,46 +32,22 @@
         });
     });
 
-
-    function createView(populateAllYears, populateCompareSeason) {
-
-
-        var $compareYears = $('#compare-years'),
-            $compareYearsWrapper = $('.compare-season-wrapper'),
-            $allYearsWrapper = $('.all-years-wrapper'),
-            $allYears = $('#all-years'),
-            $selects = $('.year-select'),
-            $dimmer = $('.dimmer');
-
-        //intitialize view state
-        $allYearsWrapper.show();
-        $compareYearsWrapper.hide();
-
-        //view1
-        $allYears.click(function () {
-            $allYearsWrapper.show();
-            $compareYearsWrapper.hide();
-            populateCompareSeason();
-        });
-
-        //view2
-        $compareYears.click(function () {
-            $allYearsWrapper.hide();
-            $compareYearsWrapper.show();
-            populateAllYears();
-        });
-
-        _.each(_.range(startYear, (new Date().getFullYear()) + 1), function (x) {
-            $selects.append($('<option>', { value: x }).text(x - 1 + '-' + x));
-        });
-
+    function filterByDate(x){
+        return x[0] > (new Date(2017, 06, 01).getTime() / 1000);
     }
 
+    function initMenuClick(x, i, wrappers, functions) {
+        x.click(function () {
+            _.each(wrappers, function (w) { w.hide() });
+            wrappers[i].show();
+            functions[i](data);
+        });
+    }
 
     function loadData(success) {
         $.ajax({
             type: 'GET',
-            url: 'http://localhost:55880/series?from=' + startYear + '-01-01&to=2018-12-01&element=SA',
+            url: 'http://localhost:55880/series-light?from=' + startYear + '-01-01&to=2018-12-01&element=SA',
             dataType: 'json',
             success: success,
             error: function (e) {
@@ -109,9 +56,11 @@
         });
     }
 
-    function showTimeseries(entries) {
+    function showTimeseries(entries, filter, container) {
 
-        Highcharts.chart('container', {
+        var d = filter == undefined ? entries: _.chain(entries).filter(filter).value();
+
+        Highcharts.chart(container === undefined ? 'container' : container, {
             tooltip: {
                 formatter: function () {
                     return Highcharts.dateFormat('%Y %b %e: ' + this.y + 'cm', this.x * 1000)
@@ -172,9 +121,12 @@
             series: [{
                 type: 'area',
                 name: 'Snødybder',
-                data: entries
+                data: d
             }]
         });
+
+        var chart = $('#container').highcharts();
+
     }
 
     function getBaseDateSeason(unixDate) {
@@ -198,12 +150,18 @@
             .value();
 
         return years;
-
-        return [2016, 2017, 2018];
     }
 
     function initYears(data) {
-        $('.year-select').change(function () {
+
+        var $selects = $('.year-select');
+        _.each(_.range(startYear, (new Date().getFullYear()) + 1), function (x) {
+            $selects.append($('<option>', { value: x }).text(x - 1 + '-' + x));
+        });
+        $($selects[0]).val(2016);
+        $($selects[1]).val(2017);
+
+        $selects.change(function () {
             showTimeseriesByYear(data);
         });
     }
@@ -290,12 +248,7 @@
 
 
     function formatData(data) {
-
-        var entries = _.chain(data)
-            .map(function (x) { return [(new Date(x.from).getTime()) / 1000, parseFloat(x.elementValue)] })
-            .value();
-
-        return entries;
+        return data;
     }
 
 })();
