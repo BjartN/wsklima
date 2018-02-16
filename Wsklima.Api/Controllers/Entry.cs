@@ -12,4 +12,10 @@ namespace Wsklima.Api.Controllers
         public int elementQuality { get; set; }
     }
 
+    public class StationEntry : Entry
+    {
+        public string stationName { get; set; }
+        public double? lat { get; internal set; }
+        public double? lon { get; internal set; }
+    }
 }

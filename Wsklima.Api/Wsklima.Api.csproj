@@ -148,6 +148,7 @@
     <Compile Include="App_Start\SwaggerConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\Entry.cs" />
+    <Compile Include="Controllers\OverviewCache.cs" />
     <Compile Include="Controllers\Station.cs" />
     <Compile Include="Controllers\TimeseriesCache.cs" />
     <Compile Include="Controllers\WsExtentions.cs" />
@@ -174,6 +175,7 @@
     <Folder Include="Models\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="LoadUrl.ps" />
     <None Include="packages.config" />
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
   </ItemGroup>

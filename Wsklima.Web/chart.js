@@ -1,64 +1,106 @@
 ﻿(function () {
 
     var startYear = 1950;
-    var data = undefined;
+    var settingsViewIdx = 4;
+    var rootUrl = 'http://localhost:55880/';
+
+    var stationSets = [
+        {
+            name: "Kvamskogen",
+            description: "Observasjoner tatt på Jonshøgdi fra 2006, Eikedalen før det.",
+            stations: [50300, 50310]
+        },
+        {
+            name: "Myrkdalen",
+            description: "Observasjoner tatt i Myrkdalen",
+            stations: [51990]
+        }
+    ];
+    var state = {
+        viewIdx: 0,
+        getStationSet: function () {
+            return stationSets[parseInt($('#station-select').val())];
+        }
+    };
 
     $(function () {
-
-        var $dimmer = $('.dimmer');
+        var $stationSelect = $('#station-select');
 
         //corresponding pages, menu items and function to run
-        var wrappers = _.map(['.all-years-wrapper', '.summary-wrapper', '.compare-season-wrapper'], function (x) { return $(x) });
-        var menuItems = _.map(['#all-years', '#summary', '#compare-years'], function (x) { return $(x) });
-        var functions = [
-            showTimeseries,
-            function (x) { showTimeseries(x, function (x) { return x[0] > (new Date(2017, 06, 01).getTime() / 1000) }, 'container3') },
-            showTimeseriesByYear
-        ];
+        var panels = _.map(['.all-years-wrapper', '.summary-wrapper', '.compare-season-wrapper', '.latest-wrapper', '.settings-wrapper'], function (x) { return $(x) });
+        var buttons = _.map(['#all-years', '#summary', '#compare-years', '#latest', '#settings'], function (x) { return $(x) });
+        var functions = [loadTimeseries, loadTimeseriesSubset, loadTimeseriesByYear, loadLatest, function () { }];
 
         //intitialize starting state
-        _.each(wrappers, function (w, i) { if (i > 0) w.hide(); });
+        _.each(panels, function (w, i) { if (i > 0) w.hide(); });
 
         //intitialize view change
-        _.each(menuItems, function (x, i) {
-            initMenuClick(x, i, wrappers, functions);
+        _.each(buttons, function (x, i) {
+            initMenuClick(x, i, panels, functions);
         })
 
-        loadData(function (json) {
-            data = formatData(json);
-            showTimeseriesByYear(data);
-            showTimeseries(data);
-            $dimmer.hide();
+        $stationSelect.change(function () {
+            changeView(state.viewIdx, panels, functions);
         });
+
+        changeView(state.viewIdx, panels, functions);
     });
 
-    function filterByDate(x){
+    function filterByDate(x) {
         return x[0] > (new Date(2017, 06, 01).getTime() / 1000);
     }
 
-    function initMenuClick(x, i, wrappers, functions) {
+    function initMenuClick(x, i, panels, functions) {
         x.click(function () {
-            _.each(wrappers, function (w) { w.hide() });
-            wrappers[i].show();
-            functions[i](data);
+            changeView(i, panels, functions);
         });
     }
 
-    function loadData(success) {
-        $.ajax({
-            type: 'GET',
-            url: 'http://localhost:55880/series-light?from=' + startYear + '-01-01&to=2018-12-01&element=SA',
-            dataType: 'json',
-            success: success,
-            error: function (e) {
-                alert('An error occured');
-            }
+    function changeView(i, panels, functions) {
+        _.each(panels, function (w) { w.hide() });
+        panels[i].show();
+        if (i !== settingsViewIdx) {
+            state.viewIdx = i;
+        }
+        functions[i]();
+    }
+
+    function loadTimeseries() {
+        var stations = state.getStationSet().stations.join(',');
+        var url = rootUrl + 'series-light?from=' + startYear + '-01-01&to=2018-12-01&element=SA&stations=' + stations;
+        loadData(url, showTimeseries);
+    }
+
+    function loadTimeseriesSubset() {
+        var stations = state.getStationSet().stations.join(',');
+        var url = rootUrl + 'series-light?from=' + startYear + '-01-01&to=2018-12-01&element=SA&stations=' + stations;
+        loadData(url, function (d) {
+            showTimeseries(d, function (x) { return isGreater(x[0], new Date(2017, 06, 01)); }, 'container3')
         });
     }
 
-    function showTimeseries(entries, filter, container) {
+    function loadTimeseriesByYear() {
+        var stations = state.getStationSet().stations.join(',');
+        var url = rootUrl + 'series-light?from=' + startYear + '-01-01&to=2018-12-01&element=SA&stations=' + stations;
+        loadData(url, showTimeseriesByYear);
+    }
 
-        var d = filter == undefined ? entries: _.chain(entries).filter(filter).value();
+    function loadLatest() {
+        var url = rootUrl + 'series-latest?limit=100';
+        loadData(url, showLatest);
+    }
+
+    function showLatest(data) {
+        var $body = $('.latest-wrapper tbody');
+        $body.html('')
+        _.each(data, function (x) {
+            $body.append('<tr><td>' + x.stationName + '</td><td>' + x.elementValue + 'cm</td></tr>')
+        });
+    }
+
+    function showTimeseries(data, filter, container) {
+
+        var d = filter == undefined ? data : _.chain(data).filter(filter).value();
 
         Highcharts.chart(container === undefined ? 'container' : container, {
             tooltip: {
@@ -70,10 +112,10 @@
                 zoomType: 'x'
             },
             title: {
-                text: 'Snødybder Kvamskogen'
+                text: state.getStationSet().name
             },
             subtitle: {
-                text: 'Observasjoner tatt på Jonshøgdi fra 2006, Eikedalen før det. Zoom ved å markere ett område i grafen.'
+                text: state.getStationSet().description
             },
             xAxis: {
                 type: 'datetime',
@@ -158,8 +200,8 @@
         _.each(_.range(startYear, (new Date().getFullYear()) + 1), function (x) {
             $selects.append($('<option>', { value: x }).text(x - 1 + '-' + x));
         });
-        $($selects[0]).val(2016);
-        $($selects[1]).val(2017);
+        $($selects[0]).val(2017);
+        $($selects[1]).val(2018);
 
         $selects.change(function () {
             showTimeseriesByYear(data);
@@ -198,7 +240,7 @@
         Highcharts.chart('container2', {
             tooltip: {
                 formatter: function () {
-                    return Highcharts.dateFormat(this.series.name + ' %b %e: ' + this.y + 'cm', this.x * 1000)
+                    return Highcharts.dateFormat(' %b %e: ' + this.y + 'cm', this.x * 1000)
                 }
             },
 
@@ -206,10 +248,10 @@
                 zoomType: 'x'
             },
             title: {
-                text: 'Snødybder Kvamskogen sesongsammenligning'
+                text: state.getStationSet().name
             },
             subtitle: {
-                text: 'Observasjoner tatt på Jonshøgdi fra 2006, Eikedalen før det. Zoom ved å markere ett område i grafen.'
+                text: state.getStationSet().description
             },
             xAxis: {
                 type: 'datetime',
@@ -246,9 +288,27 @@
         });
     }
 
+    function loadData(url, success) {
 
-    function formatData(data) {
-        return data;
+        $('.dimmer').show();
+
+        $.ajax({
+            type: 'GET',
+            url: url,
+            dataType: 'json',
+            success: function (d) {
+                success(d);
+                $('.dimmer').hide();
+            },
+            error: function () {
+                alert("Error downloading data");
+                $('.dimmer').hide();
+            }
+        });
+    }
+
+    function isGreater(unixTime, date) {
+        return unixTime > (date.getTime() / 1000)
     }
 
 })();

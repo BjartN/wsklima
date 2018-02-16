@@ -2,55 +2,64 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Bjarte.Com - Kvamskogen</title>
+    <title>Kvamskogen - Bjarte.Com</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.css" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 
     <style>
         #filter-panel {
             margin: 10px;
             padding: 10px;
             margin-top: 20px;
-            min-width:200px;
-            border:solid 1px whitesmoke;
+            min-width: 200px;
+            border: solid 1px whitesmoke;
         }
 
         #container, #container2, #container3 {
             min-width: 200px;
-            width:100%;
+            width: 100%;
             height: 400px;
             margin: 0 auto;
         }
 
         .hidden {
-            display:none;
+            display: none;
         }
+
+        .ui.menu {
+            border-radius: 0px !important;
+            margin: 0px;
+        }
+
     </style>
 </head>
 <body>
-       
-        <div class="ui active dimmer">
-            <div class="ui large text loader"> Laster inn massevis av data</div>
-        </div>
 
-    <div class="ui fixed inverted  menu">
+    <div class="ui active dimmer">
+        <div class="ui large text loader"> Laster inn massevis av data og en undulat</div>
+    </div>
+
+    <div class="ui inverted  menu">
         <a class="item" id="all-years">
             <i class="signal icon"></i>
             Alle år
         </a>
+
         <a class="item" id="compare-years">
             <i class="signal icon"></i>
-            Sammenlign sesong
+            Sammenlign
         </a>
-        <a class="item" id="summary">
-            <i class="signal icon"></i>
-            I år
-        </a>
+
+        <div class="right menu">
+            <a class="item" id="settings">
+                <i class="setting icon"></i>
+            </a>
+        </div>
     </div>
 
     <br />
     <br />
-
 
     <div class="ui stackable grid compare-season-wrapper hidden">
         <div class="four wide column">
@@ -67,17 +76,64 @@
             </div>
         </div>
         <div class="twelve wide column">
-                <div id="container2"></div>
+            <div id="container2"></div>
         </div>
     </div>
 
     <div id="container" class="all-years-wrapper"></div>
 
     <div id="container" class="summary-wrapper">
-        <div id="container3" >
-            Todo
+        <div id="container3">
         </div>
     </div>
+
+    <div class="latest-wrapper">
+        <div class="ui container">
+            <table class="ui striped table">
+                <thead>
+                    <tr>
+                        <th>Stasjon</th>
+                        <th>Snødybde</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="settings-wrapper">
+        <div class="ui container">
+            <h3>Velg stasjon</h3>
+            <div class="ui form">
+                <div class="field">
+                    <select id="station-select">
+                        <option value="0">Kvamskogen</option>
+                        <option value="1">Myrkdalen</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3>Andre menyvalg</h3>
+            <div class="ui vertical menu" style="width:100%;margin-top:20px;">
+                <a class="item" id="summary">
+                    <i class="signal icon"></i>
+                    I år
+                </a>
+                <a class="item" id="latest">
+                    <i class="signal icon"></i>
+                    Tabelloversikt Norge
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <br />
+    <br />
+    <div style="margin:20px;text-align:center">
+        <img class="ui middle aligned image" src="met-logo.svg" height="30">
+        <span style="margin-left:20px;">Data fra Meteorologisk institutt</span>
+    </div>
+
 
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.js"></script>

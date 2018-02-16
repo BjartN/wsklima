@@ -7,6 +7,7 @@ using System.Collections.Generic;
 
 namespace Wsklima.Api.Controllers
 {
+
     public class TimeseriesCache
     {
         private string _cacheFolder;
