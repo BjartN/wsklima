@@ -40,23 +40,27 @@
         <div class="ui large text loader"> Laster inn massevis av data og en undulat</div>
     </div>
 
-    <div class="ui inverted  menu">
+
+    <div class="ui inverted labeled icon menu">
         <a class="item" id="all-years">
-            <i class="signal icon"></i>
-            Alle år
+            <i class="chart area icon"></i>
+            Historikk
         </a>
 
-        <a class="item" id="compare-years">
-            <i class="signal icon"></i>
+        <a class="item" id="compare-season">
+            <i class="chart line icon"></i>
             Sammenlign
         </a>
 
         <div class="right menu">
             <a class="item" id="settings">
                 <i class="setting icon"></i>
+                 Godsaker
             </a>
         </div>
     </div>
+
+
 
     <br />
     <br />
@@ -106,9 +110,8 @@
             <h3>Velg stasjon</h3>
             <div class="ui form">
                 <div class="field">
-                    <select id="station-select">
-                        <option value="0">Kvamskogen</option>
-                        <option value="1">Myrkdalen</option>
+                    <select id="station-select" class="ui dropdown">
+                      
                     </select>
                 </div>
             </div>
@@ -116,12 +119,12 @@
             <h3>Andre menyvalg</h3>
             <div class="ui vertical menu" style="width:100%;margin-top:20px;">
                 <a class="item" id="summary">
-                    <i class="signal icon"></i>
+                    <i class="chart area icon"></i>
                     I år
                 </a>
                 <a class="item" id="latest">
-                    <i class="signal icon"></i>
-                    Tabelloversikt Norge
+                    <i class="table icon"></i>
+                    Tabelloversikt Snødybde Norge
                 </a>
             </div>
         </div>

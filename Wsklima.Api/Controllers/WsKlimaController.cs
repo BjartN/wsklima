@@ -12,7 +12,8 @@ namespace Wsklima.Api.Controllers
         const string defaultStations = "50300, 50310";              //Kvamskogen, the most beautiful place on earth
         const string noValue = "-99999";
         static int[] hours = Enumerable.Range(0, 23).ToArray();    //all hours
-        static int[] months = Enumerable.Range(1, 12).ToArray();
+        const string allMonths = "";
+        const string userName = "";
 
         [Route("series-type")]
         public object GetSeriesType(string lang = defaultLanguage)
@@ -82,6 +83,21 @@ namespace Wsklima.Api.Controllers
             return Ok();
         }
 
+        [Route("elements")]
+        public object GetElements(string timeseriesType=defaultTimeseriesType)
+        {
+            var ds = new MetDataService();
+            return ds.getElementsFromTimeserieType(defaultTimeseriesType).Select(x => new
+            {
+                x.elemCode,
+                x.elemGroup,
+                x.elemNo,
+                x.unit,
+                x.description
+            });
+
+        }
+
         [Route("series-light")]
         public object[][] GetTimeSeriesLight(DateTime from, DateTime to, string element = defaultElement, string stations = defaultStations)
         {
@@ -141,8 +157,8 @@ namespace Wsklima.Api.Controllers
                 stations,
                 element,
                 string.Join(",", hours),
-                string.Join(",", months),
-                "");
+                allMonths,
+                userName);
 
             //flatten
             var entries = result.timeStamp.SelectMany(timestamp => timestamp.location.SelectMany(location => location.weatherElement.Select(weatherElement => new StationEntry
@@ -181,8 +197,9 @@ namespace Wsklima.Api.Controllers
                 to.ToString("yyyy-MM-dd"),
                 stations,
                 element,
-                string.Join(",", hours),
-                string.Join(",", months), "");
+                string.Join(",", hours), //applies only to timeserietypeID=2, 8, 9, 13, 14, 15 og 16
+                allMonths,
+                userName);
 
             //flatten
             var entries = result.timeStamp.SelectMany(timestamp => timestamp.location.SelectMany(location => location.weatherElement.Select(weatherElement => new Entry
